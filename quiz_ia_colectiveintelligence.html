@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de IA — Collective Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f0e1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    animation: float 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb1 { width: 400px; height: 400px; background: #534AB7; top: -100px; left: -100px; animation-delay: 0s; }
+  .orb2 { width: 300px; height: 300px; background: #1D9E75; bottom: -80px; right: -80px; animation-delay: 3s; }
+  .orb3 { width: 200px; height: 200px; background: #534AB7; top: 50%; left: 60%; animation-delay: 5s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+  }
+
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 2.5rem;
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+    backdrop-filter: blur(20px);
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2rem;
+  }
+  .logo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #534AB7;
+    box-shadow: 0 0 12px #534AB7;
+  }
+  .logo-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .progress-bg {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #534AB7, #1D9E75);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .progress-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+    white-space: nowrap;
+  }
+
+  .question-num {
+    font-size: 12px;
+    color: #7F77DD;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .question-text {
+    font-size: 20px;
+    font-weight: 500;
+    color: #fff;
+    line-height: 1.5;
+    margin-bottom: 1.75rem;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option-btn {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: rgba(255,255,255,0.8);
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.2s;
+  }
+  .option-btn:hover:not(:disabled)::before { background: rgba(255,255,255,0.04); }
+  .option-btn:hover:not(:disabled) { border-color: rgba(255,255,255,0.25); transform: translateX(2px); }
+
+  .option-btn.correct {
+    background: rgba(29,158,117,0.15);
+    border-color: #1D9E75;
+    color: #5DCAA5;
+    transform: none;
+  }
+  .option-btn.wrong {
+    background: rgba(226,75,74,0.12);
+    border-color: #E24B4A;
+    color: #F09595;
+    transform: none;
+  }
+  .option-btn.reveal {
+    background: rgba(29,158,117,0.08);
+    border-color: rgba(29,158,117,0.4);
+    color: rgba(93,202,165,0.6);
+    transform: none;
+  }
+  .option-btn:disabled { cursor: default; }
+
+  .letter {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 0.5px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.5);
+    transition: all 0.2s;
+  }
+  .option-btn.correct .letter { border-color: #1D9E75; color: #1D9E75; }
+  .option-btn.wrong .letter { border-color: #E24B4A; color: #E24B4A; }
+
+  .feedback {
+    margin-top: 1.25rem;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.65;
+    display: none;
+    animation: fadeIn 0.35s ease both;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: rgba(29,158,117,0.12); border: 0.5px solid rgba(29,158,117,0.4); color: #5DCAA5; }
+  .feedback.wrong { background: rgba(226,75,74,0.1); border: 0.5px solid rgba(226,75,74,0.35); color: #F09595; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .next-btn {
+    margin-top: 1.25rem;
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: #534AB7;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    display: none;
+    transition: all 0.2s;
+    animation: fadeIn 0.35s ease both;
+  }
+  .next-btn:hover { background: #6058C8; transform: translateY(-1px); }
+  .next-btn:active { transform: scale(0.98); }
+
+  .result-wrap {
+    text-align: center;
+    padding: 1rem 0;
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .result-circle {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    border: 2px solid #534AB7;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 0 30px rgba(83,74,183,0.3);
+    position: relative;
+  }
+  .result-score { font-size: 36px; font-weight: 600; color: #fff; line-height: 1; }
+  .result-total { font-size: 14px; color: rgba(255,255,255,0.4); }
+  .result-title { font-size: 20px; font-weight: 500; color: #fff; margin-bottom: 0.5rem; }
+  .result-msg { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 2rem; line-height: 1.6; }
+
+  .restart-btn {
+    padding: 13px 32px;
+    border-radius: 12px;
+    border: 0.5px solid rgba(83,74,183,0.6);
+    background: transparent;
+    color: #7F77DD;
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .restart-btn:hover { background: rgba(83,74,183,0.12); border-color: #534AB7; }
+
+  .star { color: #FAC775; font-size: 22px; display: inline-block; }
+
+  @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+  .star.animate { animation: bounce 0.4s ease; }
+
+  @media (max-width: 480px) {
+    body { padding: 1rem; }
+    .card { padding: 1.75rem 1.5rem; }
+    .question-text { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="bg-orb orb3"></div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span class="logo-text">Collective Intelligence</span>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bg"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+    <span class="progress-label" id="progress-label">1 / 4</span>
+  </div>
+
+  <div id="quiz-area"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "¿Qué tipo de IA usa Darwin AI para atender clientes automáticamente por WhatsApp?",
+    options: ["Visión por computadora", "Agentes de IA conversacional", "IA generativa de imágenes", "Modelos de predicción numérica"],
+    correct: 1,
+    explanation: "✓ Darwin AI usa agentes conversacionales que entienden lenguaje natural para responder, calificar leads y automatizar procesos de atención al cliente."
+  },
+  {
+    q: "¿Para qué sirve principalmente Higgsfield AI?",
+    options: ["Analizar datos de ventas", "Generar videos comerciales con IA", "Crear presentaciones automáticas", "Transcribir reuniones de trabajo"],
+    correct: 1,
+    explanation: "✓ Higgsfield AI es una herramienta especializada en generación de video con IA, pensada para campañas comerciales y contenido de marca de alta calidad."
+  },
+  {
+    q: "¿Cuál es una ventaja clave de Gemini Omni frente a otros modelos de IA?",
+    options: ["Solo funciona con texto", "Puede procesar texto, imagen, audio y video en un mismo modelo", "Es exclusivo para programadores", "Solo está disponible en inglés"],
+    correct: 1,
+    explanation: "✓ Gemini Omni es un modelo multimodal nativo: puede entender y generar texto, imágenes, audio y video de forma integrada."
+  },
+  {
+    q: "¿Qué hace Claude Code que lo diferencia de un chat de IA normal?",
+    options: ["Genera imágenes con mayor calidad", "Ejecuta código, edita archivos y trabaja en tu repositorio de forma autónoma", "Traduce documentos automáticamente", "Programa reuniones en tu calendario"],
+    correct: 1,
+    explanation: "✓ Claude Code es un agente de coding que opera desde la terminal: lee archivos, ejecuta comandos, hace commits y trabaja en proyectos reales de forma autónoma."
+  }
+];
+
+let current = 0, score = 0, answered = false;
+
+function updateProgress() {
+  const pct = (current / questions.length) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = (current + 1) + ' / ' + questions.length;
+}
+
+function render() {
+  const area = document.getElementById('quiz-area');
+
+  if (current >= questions.length) {
+    document.getElementById('progress').style.width = '100%';
+    document.getElementById('progress-label').textContent = '✓ Completado';
+
+    let title = '', msg = '';
+    if (score === 4) { title = '¡Perfecto! 🎉'; msg = 'Dominaste todos los temas. Estás listo para aplicar estas herramientas.'; }
+    else if (score === 3) { title = '¡Muy bien!'; msg = 'Casi todo claro. Repasa el tema que fallaste y estarás al 100%.'; }
+    else if (score === 2) { title = 'Bien encaminado'; msg = 'Vas por buen camino. Te recomendamos repasar los temas que fallaste.'; }
+    else { title = 'Sigue aprendiendo'; msg = 'No te rindas. Con práctica vas a dominar estas herramientas de IA.'; }
+
+    const stars = '★'.repeat(score) + '☆'.repeat(4 - score);
+
+    area.innerHTML = `
+      <div class="result-wrap">
+        <div class="result-circle">
+          <div class="result-score">${score}</div>
+          <div class="result-total">de 4</div>
+        </div>
+        <div style="margin-bottom:0.75rem">${[...stars].map((s,i) => `<span class="star" style="animation-delay:${i*0.1}s">${s}</span>`).join('')}</div>
+        <div class="result-title">${title}</div>
+        <div class="result-msg">${msg}</div>
+        <button class="restart-btn" onclick="restart()">↺ Intentar de nuevo</button>
+      </div>`;
+
+    setTimeout(() => {
+      document.querySelectorAll('.star').forEach((s,i) => {
+        setTimeout(() => { s.classList.add('animate'); setTimeout(() => s.classList.remove('animate'), 400); }, i * 100);
+      });
+    }, 300);
+    return;
+  }
+
+  updateProgress();
+  const q = questions[current];
+  const letters = ['A','B','C','D'];
+
+  area.innerHTML = `
+    <div class="question-num">Pregunta ${current + 1} de ${questions.length}</div>
+    <div class="question-text">${q.q}</div>
+    <div class="options">
+      ${q.options.map((o,i) => `
+        <button class="option-btn" id="opt-${i}" onclick="choose(${i})">
+          <span class="letter">${letters[i]}</span>${o}
+        </button>`).join('')}
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="next-btn" onclick="next()">
+      ${current < questions.length - 1 ? 'Siguiente pregunta →' : 'Ver mi resultado →'}
+    </button>`;
+
+  answered = false;
+
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
+    btn.style.animationDelay = (i * 0.07) + 's';
+    btn.style.animation = 'fadeIn 0.35s ease both';
+  });
+}
+
+function choose(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const fb = document.getElementById('feedback');
+
+  for (let i = 0; i < q.options.length; i++) {
+    const btn = document.getElementById('opt-' + i);
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add(idx === q.correct ? 'correct' : 'reveal');
+    else if (i === idx) btn.classList.add('wrong');
+  }
+
+  if (idx === q.correct) {
+    score++;
+    fb.className = 'feedback correct show';
+    fb.textContent = q.explanation;
+  } else {
+    fb.className = 'feedback wrong show';
+    fb.textContent = '✗ Incorrecto. ' + q.explanation.replace('✓ ', '');
+  }
+
+  document.getElementById('next-btn').style.display = 'block';
+}
+
+function next() { current++; render(); }
+
+function restart() {
+  current = 0; score = 0; answered = false;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
